@@ -21,13 +21,11 @@ config.status
 config.h
 config.hin
 .cproject
-.project
 configDefinedKeys.cpp
 configDefinedKeys.h
 tags
 .gcda
 .gcno
-.classpath
 .settings
 
 new-maven-test/target/
