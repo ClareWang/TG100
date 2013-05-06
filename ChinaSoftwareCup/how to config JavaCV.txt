@@ -1,0 +1,5 @@
+1.下载opencv2.4.2，下载地址：http://sourceforge.net/projects/opencvlibrary/files/
+2.运行下载好的exe文件，将opencv安装到某一个目录（假设为d:\opencv）
+3.配置环境变量
+	PATH	d:\opencv\build\x86\vc10\bin;
+4.验证是否成功：用Eclipse载入ChinaSoftwareCup项目，运行JavaCVTest（在main函数中修改一下读入图片的地址）
