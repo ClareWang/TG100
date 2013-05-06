@@ -5,6 +5,7 @@
 *.o
 *.a
 *.class
+*.jar
 *.ear
 *.rar
 */.deps/*
@@ -26,5 +27,7 @@ tags
 .gcda
 .gcno
 .settings
+.classpath
+.project
 
 new-maven-test/target/
