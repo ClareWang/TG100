@@ -5,7 +5,6 @@
 *.o
 *.a
 *.class
-*.jar
 *.ear
 *.rar
 */.deps/*
