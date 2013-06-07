@@ -30,4 +30,4 @@ tags
 .classpath
 .project
 
-new-maven-test/target/
+*/target/
