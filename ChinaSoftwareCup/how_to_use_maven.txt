@@ -1,0 +1,25 @@
+1.下载maven 3.0.5，下载地址：http://maven.apache.org/download.cgi （选择Maven 3.0.5 (Binary zip)）
+2.解压maven到某一目录D:\Program Files\apache-maven-3.0.4
+3.配置环境变量
+	变量名：M2_HOME		变量值：D:\Program Files\apache-maven-3.0.4
+	变量名：Path		变量值：%M2_HOME%\bin;
+4.验证是否成功：
+	cmd中输入mvn -v
+
+注1：使用maven是自动下载依赖的库，默认的下载路径是在C:\Users\Administrator\.m2\repository，如果C盘吃紧，可以修改D:\Program Files\apache-maven-3.0.4\conf\settings.xml文件中的localRepository，如下：
+	<!-- localRepository
+	 | The path to the local repository maven will use to store artifacts.
+	 |
+	 | Default: ~/.m2/repository
+	<localRepository>/path/to/local/repo</localRepository>
+	-->
+	<localRepository>D:\MyRepository</localRepository>
+ 	<localRepository>D:\MyRepository</localRepository><!--重定向仓库位置-->
+
+注2：如何使用eclipse集成maven
+打开eclipse->Help->Install New Software..->Add
+Name:Maven2
+Location:http://m2eclipse.sonatype.org/sites/m2e（如果搜不到就使用这个地址：http://download.eclipse.org/technology/m2e/releases/1.2/1.2.0.20120903-1050）
+搜到之后->Select All->Next/Finish->重启eclipse
+
+
