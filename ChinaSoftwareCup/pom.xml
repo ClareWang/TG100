@@ -80,11 +80,32 @@
 						</configuration>
 					</execution>
 				</executions>
-			</plugin>			
+			</plugin>
+						
+			<plugin> 
+			<groupId>org.apache.maven.plugins</groupId> 
+			<artifactId>maven-resources-plugin</artifactId> 
+			<version>2.5</version> 
+			<executions> 
+				<execution> 
+					<id>copy-resources</id> 
+					<phase>install</phase> 
+					<configuration> 
+						<outputDirectory>${project.build.directory}</outputDirectory> 
+						<resources>          
+							<resource> 
+								<directory>src/main/resources/</directory> 
+							</resource> 
+						</resources>              
+					</configuration> 
+					<goals> 
+						<goal>copy-resources</goal> 
+					</goals>      
+				</execution> 
+			</executions> 
+			</plugin> 
 		</plugins>
     </build>
-	
-	
 	
     <dependencies>
 		<dependency>
@@ -111,6 +132,24 @@
             <version>${javacv.version}</version>
             <classifier>${platform.name}</classifier>
         </dependency>
+        <dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.16</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.6.4</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.6.1</version>
+			<scope>compile</scope>
+		</dependency>
     </dependencies>   
          
 	<!-- Used to determine property <platform.name>${os.name}-${os.arch}</platform.name> -->
