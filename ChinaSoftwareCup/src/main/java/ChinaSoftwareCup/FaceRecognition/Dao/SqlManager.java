@@ -39,7 +39,11 @@ public class SqlManager {
 			this.DBpasswd = bundle.getString("DBpassword");
 			String database_type = bundle.getString("database-type");
 			if(database_type != null){
-				if(database_type.toLowerCase().equals("mysql")){
+				if (database_type.toLowerCase().equals("oracle"))
+				{ // 设置oracle数据库的驱动程序和连接字符
+					jdbcDrive = "oracle.jdbc.driver.OracleDriver";
+					strcon = "jdbc:oracle:thin:@" + DBhost + ":" + DBprot + ":" + DBname;
+				}else if(database_type.toLowerCase().equals("mysql")){
 					//set driver and connecting string to mysql database
 					jdbcDrive = "com.mysql.jdbc.Driver";
 					strcon = "jdbc:mysql://" + DBhost + ":" + DBprot + "/" + DBname;

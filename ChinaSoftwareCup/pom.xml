@@ -182,11 +182,11 @@
 			<version>1.6.1</version>
 			<scope>compile</scope>
 		</dependency>
-		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<version>5.1.25</version>
-		</dependency>
+		<dependency>  
+    		<groupId>com.oracle</groupId>  
+    		<artifactId>ojdbc6</artifactId>  
+    		<version>11.2.0.3</version>  
+		</dependency>    
     </dependencies>   
          
 	<!-- Used to determine property <platform.name>${os.name}-${os.arch}</platform.name> -->

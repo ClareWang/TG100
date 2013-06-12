@@ -21,7 +21,7 @@ public class OperatorDAO {
 	public boolean loginCheck(String username, String password){
 		boolean result=false;
 		try {
-			String sql="select * from db_user where username=? and password=?";
+			String sql="select * from db_users where username=? and password=?";
 			Object[] params=new Object[]{username,password};
 			ResultSet rs=manage.executeQuery(sql, params, Constants.PSTM_TYPE);
 			while(rs.next()){
@@ -45,7 +45,7 @@ public class OperatorDAO {
 	public boolean addOperator(Operator operator){
 		boolean result=false;
 		try {
-			String sql="insert into db_user(username,password) values (?,?)";
+			String sql="insert into db_users(username,password) values (?,?)";
 			Object[] params=new Object[]{operator.getUserName(),operator.getPassword()};
 			result=manage.executeUpdate(sql, params, Constants.PSTM_TYPE);
 			manage.closeDB();
@@ -67,7 +67,7 @@ public class OperatorDAO {
 		boolean result=false;
 		try
 		{
-			String sql="delete from db_user where username=?";
+			String sql="delete from db_users where username=?";
 			Object[] params= new Object[]{username};
 			result=manage.executeUpdate(sql, params, Constants.PSTM_TYPE);
 			manage.closeDB();
@@ -91,7 +91,7 @@ public class OperatorDAO {
 		boolean result=false;
 		try
 		{
-			String sql="update db_user set password=? where username=?";
+			String sql="update db_users set password=? where username=?";
 			Object[] params=new Object[]{password,username};
 			result=manage.executeUpdate(sql, params, Constants.PSTM_TYPE);
 			manage.closeDB();
@@ -115,7 +115,7 @@ public class OperatorDAO {
     	Operator result=new Operator();
     	try
 		{
-			String sql="select * from db_user where username=?";
+			String sql="select * from db_users where username=?";
 			Object[] params=new Object[]{userName};
 			ResultSet rs=manage.executeQuery(sql, params, Constants.PSTM_TYPE);
 			if(rs.next())
