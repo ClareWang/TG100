@@ -1,0 +1,12 @@
+1.将ojdbc6.jar.txt重命名为ojdbc6.jar.
+2.打开dos窗口，cd到ojdbc6.jar文件所在的路径下
+3.运行一下命令：
+	mvn install:install-file -DgroupId=com.oracle -DartifactId=ojdbc6 -Dversion=11.2.0.3 -Dpackaging=jar -Dfile=ojdbc6.jar
+4.经过上述步骤就将ojdbc6.jar安装在了maven的本地仓库中。
+5.用eclipse打开项目，打开pom.xml文件，加入以下代码：
+	<dependency>  
+		<groupId>com.oracle</groupId>  
+		<artifactId>ojdbc6</artifactId>  
+		<version>11.2.0.3</version>  
+	</dependency>
+6.这样就将ojdbc6.jar配置在项目中了，之后就可以正常使用。
