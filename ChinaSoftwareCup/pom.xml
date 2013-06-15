@@ -45,7 +45,11 @@
 							<addClasspath>true</addClasspath>	
 							<classpathPrefix>lib/</classpathPrefix>	
 							<mainClass>ChinaSoftwareCup.FaceRecognition.main.JavaCVTest</mainClass>    
-						</manifest>	
+						</manifest>
+						<!-- add the classpath of ojdbc.jar -->
+						<manifestEntries>  
+							<Class-Path>ojdbc6.jar</Class-Path>  
+						</manifestEntries> 						
 					</archive>	
 				</configuration>
 			</plugin>
@@ -182,11 +186,11 @@
 			<version>1.6.1</version>
 			<scope>compile</scope>
 		</dependency>
-		<dependency>  
+		<!--dependency>  
     		<groupId>com.oracle</groupId>  
     		<artifactId>ojdbc6</artifactId>  
     		<version>11.2.0.3</version>  
-		</dependency>    
+		</dependency-->    
     </dependencies>   
          
 	<!-- Used to determine property <platform.name>${os.name}-${os.arch}</platform.name> -->
