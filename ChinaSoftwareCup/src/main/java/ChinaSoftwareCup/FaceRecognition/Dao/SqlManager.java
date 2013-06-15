@@ -1,5 +1,8 @@
 package ChinaSoftwareCup.FaceRecognition.Dao;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -7,6 +10,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.PropertyResourceBundle;
+
+import javax.persistence.criteria.Path;
+import javax.sound.midi.Patch;
+
+import ChinaSoftwareCup.FaceRecognition.log.Log;
 
 public class SqlManager {
 	private final int PSTM_TYPE = 0;
@@ -31,7 +39,10 @@ public class SqlManager {
 	 */
 	private SqlManager(){
 		try {
-			bundle = new PropertyResourceBundle(SqlManager.class.getResourceAsStream("Config.properties"));
+			String filePath = System.getProperty("user.dir") + "\\Config.properties";
+			Log.info(filePath.toString());
+			InputStream in = new BufferedInputStream(new FileInputStream(filePath));
+			bundle = new PropertyResourceBundle(in);
 			this.DBhost = bundle.getString("DBhost");
 			this.DBname = bundle.getString("DBname");
 			this.DBprot = bundle.getString("DBport");
@@ -40,7 +51,7 @@ public class SqlManager {
 			String database_type = bundle.getString("database-type");
 			if(database_type != null){
 				if (database_type.toLowerCase().equals("oracle"))
-				{ // 设置oracle数据库的驱动程序和连接字符
+				{ // 设置oracle数据库的驱动程序和连接字符 
 					jdbcDrive = "oracle.jdbc.driver.OracleDriver";
 					strcon = "jdbc:oracle:thin:@" + DBhost + ":" + DBprot + ":" + DBname;
 				}else if(database_type.toLowerCase().equals("mysql")){
