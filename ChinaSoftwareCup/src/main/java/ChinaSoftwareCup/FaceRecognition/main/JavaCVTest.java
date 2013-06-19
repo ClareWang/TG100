@@ -12,6 +12,7 @@ import ChinaSoftwareCup.FaceRecognition.ImageProcessing.Image;
 import ChinaSoftwareCup.FaceRecognition.ImageProcessing.base.ImageColor;
 import ChinaSoftwareCup.FaceRecognition.camera.CameraCapture;
 import ChinaSoftwareCup.FaceRecognition.log.Log;
+import ChinaSoftwareCup.FaceRecognition.vedio.Vedio;
 
 
 public class JavaCVTest {
@@ -29,8 +30,9 @@ public class JavaCVTest {
 		//FaceDetect fd=new FaceDetect(); // detect the face of image
 		//IplImage output=fd.doFaceDetect(image);
 		IplImage image=null;
-		image=CameraCapture.doCapture();
-		Image.showImage(image);
+		//image=CameraCapture.doCapture();
+		//Image.showImage(image);
+		//Vedio.test();
 		//Image.writeImage(image, "D:\\whf123.jpg");
 		//Image.showImage(output);
 		Log.info("End!");
