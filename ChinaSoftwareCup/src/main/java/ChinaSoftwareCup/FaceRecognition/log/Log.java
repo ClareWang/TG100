@@ -15,4 +15,9 @@ public class Log
 		Logger logger = LoggerFactory.getLogger("EventLog");
 		logger.error(errorMessage);
 	}
+	static public void debug(String debugMessage)
+	{
+		Logger logger = LoggerFactory.getLogger("EventLog");
+		logger.debug(debugMessage);
+	}
 }
