@@ -26,15 +26,23 @@ public class JavaCVTest {
 		//DOMConfigurator.configure("log4j.xml");
 		Log.info("Start!");
 		
-		//IplImage image=Image.readImage("D:\\whf.jpg",ImageColor.COLOR);//load the image
+		IplImage image=Image.readImage("D:\\whf.jpg",ImageColor.COLOR);//load the image
+		Image.showImage(image);
+		//IplImage image=null;
+		//image=CameraCapture.doCapture();
 		//FaceDetect fd=new FaceDetect(); // detect the face of image
 		//IplImage output=fd.doFaceDetect(image);
-		IplImage image=null;
-		//image=CameraCapture.doCapture();
-		//Image.showImage(image);
+		
+		IplImage finalImage=Image.resizeImage(image, 200, 160);
+		//Image.histeq(finalImage);
+		Image.showImage(finalImage);
+
+		//Image.showImage(grayImage);
+		
+		
 		//Vedio.test();
 		//Image.writeImage(image, "D:\\whf123.jpg");
-		//Image.showImage(output);
+		
 		Log.info("End!");
 	}
 

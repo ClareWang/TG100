@@ -2,9 +2,9 @@ package ChinaSoftwareCup.FaceRecognition.ImageProcessing;
 
 import static com.googlecode.javacv.cpp.opencv_core.*;
 import static com.googlecode.javacv.cpp.opencv_highgui.*;
-import static com.googlecode.javacv.cpp.opencv_imgproc.CV_BGR2GRAY;
-import static com.googlecode.javacv.cpp.opencv_imgproc.cvCvtColor;
+import static com.googlecode.javacv.cpp.opencv_imgproc.*;
 
+import ChinaSoftwareCup.FaceRecognition.ImageProcessing.base.FilterType;
 import ChinaSoftwareCup.FaceRecognition.ImageProcessing.base.ImageColor;
 import ChinaSoftwareCup.FaceRecognition.log.Log;
 
@@ -29,6 +29,7 @@ public class Image
 	
 	public static IplImage cropImage(IplImage image,int x,int y, int width,int height)
 	{
+		Log.debug("Crop the image.");
 		CvRect r = new CvRect(x, y, width, height);
 		IplImage cropped = cvCreateImage(cvGetSize(image), image.depth(), image.nChannels());
 		cvCopy(image, cropped);
@@ -36,8 +37,17 @@ public class Image
 		return cropped;
 	}
 	
+	public static IplImage resizeImage(IplImage image, int x,int y)
+	{
+		Log.debug("Resize the image from ["+image.width()+","+image.height()+"] to ["+x+","+y+"].");
+		IplImage output = cvCreateImage(cvSize(x,y), image.depth(), image.nChannels());
+		cvResize(image, output, CV_INTER_LINEAR);
+		return output;
+	}
+	
 	public static IplImage rgb2Gray(IplImage image)
 	{
+		Log.debug("Change the image from RGB to gray.");
 		IplImage grayImg = IplImage.create(image.width(), image.height(), IPL_DEPTH_8U, 1);
         cvCvtColor(image, grayImg, CV_BGR2GRAY);
         return grayImg;
@@ -103,4 +113,36 @@ public class Image
 		}
 	}
 	
+	public static boolean smooth(IplImage image,FilterType filterType,int size)
+	{
+		if(null != image)
+		{
+			switch (filterType)
+			{
+			case GAUSSIAN:
+				Log.debug("GAUSSIAN filter.");
+				cvSmooth(image,image,CV_GAUSSIAN,size);
+				return true;
+			case MEDIAN:
+				Log.debug("MEDIAN filter.");
+				cvSmooth(image,image,CV_MEDIAN,size);
+				return true;
+			default:
+				Log.error("The input FilterType is wrong, return false!");
+				return false;
+			}
+				
+		}
+		else
+		{
+			Log.error("The image is null!");
+			return false;
+		}
+	}
+	
+	public static void histeq(IplImage image)
+	{
+		Log.debug("Equalize the hist of the image.");
+		cvEqualizeHist(image,image);
+	}
 }

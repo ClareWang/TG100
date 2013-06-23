@@ -42,7 +42,7 @@ public class FaceDetect
    	    if(num>-1)
    	    {
    	    	CvRect r = new CvRect(cvGetSeqElem(faces, num));
-   	    	IplImage output=Image.cropImage(origImg, r.x()*SCALE, r.y()*SCALE, r.width()*SCALE, r.height()*SCALE);
+   	    	IplImage output=Image.cropImage(grayImg, r.x()*SCALE, r.y()*SCALE, r.width()*SCALE, r.height()*SCALE);
    	    	return output;
    	    }
    	    else
