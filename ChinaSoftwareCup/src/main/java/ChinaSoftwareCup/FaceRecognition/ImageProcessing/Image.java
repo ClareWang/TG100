@@ -31,9 +31,10 @@ public class Image
 	{
 		Log.debug("Crop the image.");
 		CvRect r = new CvRect(x, y, width, height);
-		IplImage cropped = cvCreateImage(cvGetSize(image), image.depth(), image.nChannels());
+		cvSetImageROI(image, r);
+		IplImage cropped = cvCreateImage(cvSize(width,height), image.depth(), image.nChannels());
 		cvCopy(image, cropped);
-		cvSetImageROI(cropped, r);
+		cvResetImageROI(image);
 		return cropped;
 	}
 	

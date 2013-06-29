@@ -11,31 +11,30 @@ import ChinaSoftwareCup.FaceRecognition.ImageProcessing.Image;
 
 public class Lda
 {
-	private int numberOfPeople; 		//������
-	private int xOfImage = 120; 				//ͼ����
-	private int yOfImage = 120; 				//ͼ��߶�
-	private int numberOfEachPeople =3;		//ÿ�������е�������
-	private static String filePath = "D:\\PICtest\\";
+	private int numberOfPeople; 		
+	private int xOfImage; 				
+	private int yOfImage; 				
+	private int numberOfEachPeople;		
+	private static String filePath;
+	private CvMat [] classOfPeople;
 	
-	public Lda(int num)					//���캯�������Ϊ����������
+	public Lda(int i,int x,int y,String path)					
 	{
-		numberOfPeople=num;
-		xOfImage = 120;
-		yOfImage = 120; 
-		numberOfEachPeople =3;
-		filePath = "D:\\PICtest\\";
+		numberOfEachPeople =i;
+		xOfImage = x;
+		yOfImage = y; 
+		filePath = path;
+	}
+	
+	public void setNumberOfPeople(int numberOfPeople)
+	{
+		this.numberOfPeople=numberOfPeople;
 	}
 	
 	
-	public int getLDAResult()
+	public void init()
 	{
-		
-		long t1=System.currentTimeMillis();
-		int xy=xOfImage*yOfImage;
-		
-		CvMat unknowPeople=Image.readImage2Mat("D:\\PICtest\\00101.bmp",ImageColor.GRAYSCALE); //tempΪδ֪ͼ��
-		
-		CvMat [] p = new CvMat[numberOfPeople * numberOfEachPeople]; //������������ͼ�������p�� 
+		CvMat [] p = new CvMat[numberOfPeople * numberOfEachPeople]; 
 		for(int num=1;num<=numberOfPeople;num++)
 		{
 			for(int i=1;i<=numberOfEachPeople;i++)
@@ -44,21 +43,166 @@ public class Lda
 			}
 		}
 		
-		
-
-		CvMat unknown = cvMatReshape(unknowPeople); //��δ֪ͼ��ת��Ϊ��1*14400������unknown 
-		
-		long t2=System.currentTimeMillis();	
-		System.out.println("t2-t1: "+(t2-t1));
-		
-		CvMat [] classOfPeople= new CvMat[numberOfPeople]; //��֪����
+		classOfPeople= new CvMat[numberOfPeople]; 
 		for(int n=0;n<numberOfPeople;n++)
 		{
-			classOfPeople[n]=creatClassLib(p,n*numberOfEachPeople,n*numberOfEachPeople+numberOfEachPeople-1);
+			classOfPeople[n]=creatClassLib(p,n*numberOfEachPeople,n*numberOfEachPeople+numberOfEachPeople-1); //[n,xy]
 		}
-		long t3=System.currentTimeMillis();	
-		System.out.println("t3-t2: "+(t3-t2));
-		CvMat [] averageOfClass=new CvMat[numberOfPeople]; //���ֵ
+
+	}
+		
+	public int getLDAResult(IplImage inputPeople)
+	{
+		CvMat unknowPeople=cvCreateMat(inputPeople.height(),inputPeople.width(),CV_64FC1);
+		cvConvert(inputPeople,unknowPeople);
+		//CvMat unknowPeople=Image.readImage2Mat(filePath+"temp.bmp",ImageColor.GRAYSCALE); //[x,y]
+		CvMat unknown = cvMatReshape(unknowPeople); //[1,xy]
+		
+		double [] result = nullSpaceLDA(unknown,classOfPeople,xOfImage,yOfImage);;
+		
+		if(result == null)
+			return 0;
+		
+		double test=result[0];
+		int resultNum=0;
+		Log.info("result[1]:"+result[0]);
+		for(int i=1;i<numberOfPeople;i++)
+		{
+			Log.info("result["+(i+1)+"]:"+result[i]);
+			if(result[i]<test)
+			{
+				resultNum=i;
+				test=result[i];
+			}
+				
+		}
+		
+		cvReleaseMat(unknowPeople);
+		cvReleaseMat(unknown);
+		if(test>100000)
+			return 0;
+		else
+			return resultNum+1;
+	}
+
+	public String getLoadPath(int num,int i) 
+	{
+		if(num <= 0)
+		{
+			Log.error("i<=0");
+			return null;
+		}
+		else if (i <= 0)
+		{
+			Log.error("num<=0");
+			return null;
+		}
+		else
+		{
+			String loadPath=filePath;
+			if(num <= 9)
+			{
+				loadPath+="00";
+			}
+			else if(num <= 99)
+			{
+				loadPath+="0";
+			}
+			loadPath+=num;
+			if(i<=9)
+			{
+				loadPath+="0";
+			}
+			loadPath+=i;
+			loadPath+=".bmp";
+			
+			
+			return loadPath;
+		}
+	}
+		
+	//calculate the average of a CvMat by rows
+	private CvMat meanByRows(CvMat input)
+	{
+		if(null == input)
+		{
+			Log.error("Input CvMat is null");
+			return null;
+		}
+		else
+		{
+			int x=input.rows();
+			int y=input.cols();
+			CvMat output =cvCreateMat(1, y, CV_64FC1);
+			double temp;
+			for(int j=0;j<y;j++)
+			{
+				temp=0;
+				for(int i=0;i<x;i++)
+				{
+					temp+=input.get(i,j)/x;
+				}
+				output.put(0,j,temp);
+			}
+			return output;
+		}
+	}
+
+	//n CvMats(x,y) ---> 1 CvMat(n,x*y)  
+	private CvMat creatClassLib(CvMat [] p,int start,int end)
+	{
+		if(null == p)
+		{
+			Log.error("The input CvMat is null!");
+			return null;
+		}
+		else
+		{
+			int x=p[start].rows();
+			int y=p[start].cols();
+			CvMat output=cvCreateMat(end-start+1,x*y, CV_64FC1);
+			for(int k=start;k<=end;k++)
+			{
+				CvMat temp=cvMatReshape(p[k]);						
+				for(int i=0;i<x*y;i++)
+				{
+					output.put(k-start,i,temp.get(0,i));
+				}
+				cvReleaseMat(temp);
+			}
+			return output;
+		}
+	}
+	
+	//A(x,y)--->B(1,x*y)
+	private CvMat cvMatReshape(CvMat input)
+	{
+		if(null == input)
+		{
+			Log.error("The input CvMat is null!");
+			return null;
+		}
+		else
+		{
+			int rows=input.rows();
+			int cols=input.cols();
+			CvMat output=cvCreateMat(1,rows*cols,CV_64FC1);
+			for(int i=0;i<rows;i++)
+			{
+				for(int j=0;j<cols;j++)
+				{
+					output.put(0, i*cols+j, input.get(i,j));
+				}
+			}
+			return output;
+		}
+	}
+	
+	
+	private double [] directLDA(CvMat unknown,CvMat [] classOfPeople,int x,int y)
+	{
+		int xy=x*y;
+		CvMat [] averageOfClass=new CvMat[numberOfPeople];
 		for(int i=0;i<numberOfPeople;i++)
 		{
 			averageOfClass[i]=meanByRows(classOfPeople[i]);
@@ -90,7 +234,7 @@ public class Lda
 			}
 			for(int j=0;j<xy;j++)
 			{
-				ob.put(i,j,temp1.get(0,j)*tempResult);//����ob
+				ob.put(i,j,temp1.get(0,j)*tempResult);
 			}
 		}
 		cvReleaseMat(temp1);
@@ -120,8 +264,6 @@ public class Lda
 			}
 		}
 		
-		long t4=System.currentTimeMillis();	
-		System.out.println("t4-t3: "+(t4-t3));
 		
 		CvMat Y=cvCreateMat(xy,flag1,CV_64FC1);
 		temp1=cvCreateMat(numberOfPeople,1,CV_64FC1);
@@ -135,7 +277,7 @@ public class Lda
 			cvGEMM(ob_t,temp1,1,null,0,temp2,0);
 			for(int i=0;i<xy;i++)
 			{
-				Y.put(i,flag1-j-1,temp2.get(i,0));//�����Y
+				Y.put(i,flag1-j-1,temp2.get(i,0));
 			}
 		}
 		cvReleaseMat(temp1);
@@ -147,11 +289,11 @@ public class Lda
 		
 		cvGEMM(ob,Y,1,null,0,temp1,0);
 		cvTranspose(temp1,temp2);
-		cvGEMM(temp2,temp1,1,null,0,Db,0);//�����Db
+		cvGEMM(temp2,temp1,1,null,0,Db,0);
 		cvReleaseMat(temp1);
 		cvReleaseMat(temp2);
 		
-		for(int i=0;i<flag1;i++)//����DbΪ�ԽǾ���
+		for(int i=0;i<flag1;i++)
 		{
 			for(int j=0;j<flag1;j++)
 			{
@@ -164,8 +306,6 @@ public class Lda
 			}
 		}
 		
-		long t5=System.currentTimeMillis();	
-		System.out.println("t5-t4: "+(t5-t4));
 		
 		CvMat Z=cvCreateMat(xy,flag1,CV_64FC1);
 		CvMat Z_t=cvCreateMat(flag1,xy,CV_64FC1);
@@ -178,7 +318,7 @@ public class Lda
 		cvReleaseMat(temp2);
 		cvTranspose(Z,Z_t);
 		
-		CvMat ow=cvCreateMat(numberOfEachPeople*numberOfPeople,xy,CV_64FC1);;//Sw=ow_t*ow ������ɢ�Ⱦ���
+		CvMat ow=cvCreateMat(numberOfEachPeople*numberOfPeople,xy,CV_64FC1);
 		
 		
 			
@@ -206,8 +346,6 @@ public class Lda
 		cvReleaseMat(temp1);
 		cvReleaseMat(temp2);
 		
-		long t6=System.currentTimeMillis();
-		System.out.println("t6-t5: "+(t6-t5));
 		
 		CvMat owt=cvCreateMat(numberOfPeople*numberOfEachPeople,flag1,CV_64FC1);
 		cvGEMM(ow,Z,1,null,0,owt,0);
@@ -262,12 +400,12 @@ public class Lda
 
 		cvGEMM(owt,U,1,null,0,temp1,0);
 		cvTranspose(temp1,temp2);
-		cvGEMM(temp2,temp1,1,null,0,Dw,0);//�����Dw
+		cvGEMM(temp2,temp1,1,null,0,Dw,0);
 		cvReleaseMat(temp1);
 		cvReleaseMat(temp2);
 
 		
-		for(int i=0;i<flag2;i++)//����DbΪ�ԽǾ���
+		for(int i=0;i<flag2;i++)
 		{
 			for(int j=0;j<flag2;j++)
 			{
@@ -294,7 +432,7 @@ public class Lda
 		cvPow(Dw,M1,0.5);
 		cvPow(M1,M2,-1);
 		cvGEMM(M2,A,1,null,0,temp1,0);
-		cvTranspose(temp1,At);//AtΪ����õĽ�ά����
+		cvTranspose(temp1,At);
 
 		cvReleaseMat(temp1);
 		cvReleaseMat(M1);
@@ -330,143 +468,266 @@ public class Lda
 			}
 			result[i]=Math.sqrt(result[i]);
 		}
+			
+		return result;
+	}
+	
+	private double [] nullSpaceLDA(CvMat unknown,CvMat [] classOfPeople,int x,int y)
+	{
 		
-		
-		double test=result[0];
-		int resultNum=0;
-		for(int i=1;i<numberOfPeople;i++)
+		int xy=x*y;
+		CvMat [] averageOfClass=new CvMat[numberOfPeople];
+		for(int i=0;i<numberOfPeople;i++)
 		{
-			if(result[i]<test)
+			averageOfClass[i]=meanByRows(classOfPeople[i]);
+		}
+		
+		CvMat averageOfAll=cvCreateMat(1, xy,CV_64FC1);
+		double tmp;
+		for(int j=0;j<xy;j++)
+		{
+			tmp=0;
+			for(int i=0;i<numberOfPeople;i++)
 			{
-				resultNum=i;//���ƥ���Ľ��
-				test=result[i];
+				tmp+=averageOfClass[i].get(0,j)/numberOfPeople;
 			}
+			averageOfAll.put(0,j,tmp);
+		}
+		
+		CvMat ob=cvCreateMat(numberOfPeople,xy,CV_64FC1);
+		for(int i=0;i<numberOfPeople;i++)
+		{
+			for(int j=0;j<xy;j++)
+			{
+				ob.put(i,j,(averageOfClass[i].get(0,j)-averageOfAll.get(0,j))/(numberOfEachPeople*numberOfPeople));//����ob
+			}
+		}
+		CvMat ob_t=cvCreateMat(xy,numberOfPeople,CV_64FC1);
+		cvTranspose(ob,ob_t);
+		
+		CvMat ow=cvCreateMat(numberOfEachPeople*numberOfPeople,xy,CV_64FC1);
+		for(int i=0;i<numberOfPeople;i++)
+		{
+			for(int n=0;n<numberOfEachPeople;n++)
+			{
+				for(int j=0;j<xy;j++)
+				{
+					ow.put(i*numberOfEachPeople+n,j,(classOfPeople[i].get(n,j)-averageOfClass[i].get(0,j))/(numberOfEachPeople*numberOfPeople));
+				}
+			}
+		}
+		CvMat ow_t=cvCreateMat(xy,numberOfEachPeople*numberOfPeople,CV_64FC1);
+		cvTranspose(ow,ow_t);
+		
+		CvMat ot=cvCreateMat(numberOfEachPeople*numberOfPeople,xy,CV_64FC1);
+		for(int i=0;i<numberOfPeople;i++)
+		{
+			for(int n=0;n<numberOfEachPeople;n++)
+			{
+				for(int j=0;j<xy;j++)
+				{
+					ot.put(i*numberOfEachPeople+n,j,(classOfPeople[i].get(n,j)-averageOfAll.get(0,j))/(numberOfEachPeople*numberOfPeople));
+				}
+			}
+		}
+		CvMat ot_t=cvCreateMat(xy,numberOfEachPeople*numberOfPeople,CV_64FC1);
+		cvTranspose(ot,ot_t);
+		
+		
+		CvMat temp1=cvCreateMat(numberOfEachPeople*numberOfPeople,numberOfEachPeople*numberOfPeople,CV_64FC1);
+		cvGEMM(ot,ot_t,1,null,0,temp1,0);
+		
+		CvMat V=cvCreateMat(numberOfEachPeople*numberOfPeople,numberOfEachPeople*numberOfPeople,CV_64FC1);
+		CvMat D=cvCreateMat(1,numberOfEachPeople*numberOfPeople,CV_64FC1);
+		
+		cvEigenVV(temp1,V,D,0,-1,-1);
+		cvTranspose(V,V);
+		
+		CvMat U=cvCreateMat(xy,numberOfEachPeople*numberOfPeople-1,CV_64FC1);
+		for(int j=0;j<numberOfEachPeople*numberOfPeople-1;j++)
+		{
+			CvMat Vtemp = cvCreateMat(numberOfEachPeople*numberOfPeople,1,CV_64FC1);
+			for(int i=0;i<numberOfEachPeople*numberOfPeople;i++)
+			{
+				Vtemp.put(i,0,V.get(i,numberOfEachPeople*numberOfPeople-1-j-1));
+			}
+			
+			CvMat temp = cvCreateMat(xy,1,CV_64FC1);
+			cvGEMM(ot_t,Vtemp,1,null,0,temp,0);
+			
+			for(int i=0;i<xy;i++)
+			{
+				U.put(i,j,temp.get(i,0));
+			}
+			cvReleaseMat(Vtemp);
+			cvReleaseMat(temp);
+		}
 				
+		//Sw1=U'*Sw*U
+		//Sw1=U'*(ot'*ot)*U
+		//Sw1=(ow*U)'*ow*U;
+		CvMat Sw1 = cvCreateMat(numberOfEachPeople*numberOfPeople-1,numberOfEachPeople*numberOfPeople-1,CV_64FC1);
+		temp1=cvCreateMat(numberOfEachPeople*numberOfPeople,numberOfEachPeople*numberOfPeople-1,CV_64FC1);
+		cvGEMM(ow,U,1,null,0,temp1,0);
+		CvMat temp1_t=cvCreateMat(numberOfEachPeople*numberOfPeople-1,numberOfEachPeople*numberOfPeople,CV_64FC1);
+		cvTranspose(temp1,temp1_t);
+		CvMat temp2=cvCreateMat(numberOfEachPeople*numberOfPeople-1,xy,CV_64FC1);
+		cvGEMM(temp1_t,ow,1,null,0,temp2,0);
+		cvGEMM(temp2,U,1,null,0,Sw1,0);
+
+		//Sb1=(ob*U)'*ob*U;
+		CvMat Sb1 = cvCreateMat(numberOfEachPeople*numberOfPeople-1,numberOfEachPeople*numberOfPeople-1,CV_64FC1);
+		temp1=cvCreateMat(numberOfPeople,numberOfEachPeople*numberOfPeople-1,CV_64FC1);
+		cvGEMM(ob,U,1,null,0,temp1,0);
+		temp1_t=cvCreateMat(numberOfEachPeople*numberOfPeople-1,numberOfPeople,CV_64FC1);
+		cvTranspose(temp1,temp1_t);
+		temp2=cvCreateMat(numberOfEachPeople*numberOfPeople-1,xy,CV_64FC1);
+		cvGEMM(temp1_t,ob,1,null,0,temp2,0);
+		cvGEMM(temp2,U,1,null,0,Sb1,0);
+
+		V=cvCreateMat(numberOfEachPeople*numberOfPeople-1,numberOfEachPeople*numberOfPeople-1,CV_64FC1);
+		D=cvCreateMat(1,numberOfEachPeople*numberOfPeople-1,CV_64FC1);
+		cvEigenVV(Sw1,V,D,0,-1,-1);
+		cvTranspose(V,V);
+		int flag=0;
+		for(int i=0;i<numberOfEachPeople*numberOfPeople-1;i++)
+		{
+			if(D.get(i)<0.0001)
+				flag++;
+		}
+		if(flag==0)
+		{
+			Log.error("Can not find V to make V'*Sw1*V=0");
+			return null;
+		}
+		CvMat Q=cvCreateMat(numberOfEachPeople*numberOfPeople-1,flag,CV_64FC1);
+		for(int i=0;i<numberOfEachPeople*numberOfPeople-1;i++)
+		{
+			for(int j=0;j<flag;j++)
+			{
+				Q.put(i,j,V.get(i,numberOfEachPeople*numberOfPeople-1-flag+j));
+			}
+		}
+		CvMat Q_t=cvCreateMat(flag,numberOfEachPeople*numberOfPeople-1,CV_64FC1);
+		//Sb2=Q'*Sb1*Q;
+		CvMat Sb2=cvCreateMat(flag,flag,CV_64FC1);
+		temp1=cvCreateMat(flag,numberOfEachPeople*numberOfPeople-1,CV_64FC1);
+		cvGEMM(Q_t,Sb1,1,null,0,temp1,0);
+		cvGEMM(temp1,Q,1,null,0,Sb2,0);
+		
+		V=cvCreateMat(flag,flag,CV_64FC1);
+		D=cvCreateMat(1,flag,CV_64FC1);
+		cvEigenVV(Sb2,V,D,0,-1,-1);
+		
+		//W=U*Q*V
+		CvMat W=cvCreateMat(xy,flag,CV_64FC1);
+		temp1=cvCreateMat(xy,flag,CV_64FC1);
+		cvGEMM(U,Q,1,null,0,temp1,0);
+		cvGEMM(temp1,V,1,null,0,W,0);
+		
+		CvMat [] newClassOfPeopleTemp =new CvMat[numberOfPeople];
+		for(int i=0;i<numberOfPeople;i++)
+		{
+			newClassOfPeopleTemp[i]=cvCreateMat(numberOfEachPeople,flag,CV_64FC1);
+			cvGEMM(classOfPeople[i],W,1,null,0,newClassOfPeopleTemp[i],0);
+		}
+		CvMat [] newClassOfPeople =new CvMat[numberOfPeople];
+		for(int i=0;i<numberOfPeople;i++)
+		{
+			newClassOfPeople[i]=meanByRows(newClassOfPeopleTemp[i]);
+		}
+
+
+		CvMat unknownResult=cvCreateMat(1,flag,CV_64FC1);
+		cvGEMM(unknown,W,1,null,0,unknownResult,0);
+		
+		double [] result=new double[numberOfPeople];
+		for(int i=0;i<numberOfPeople;i++)
+			result[i]=0;
+
+		for(int i=0;i<numberOfPeople;i++)
+		{
+			for(int j=0;j<flag;j++)
+			{
+				double r=unknownResult.get(0,j)-newClassOfPeople[i].get(0,j);
+				result[i]+=r*r;
+			}
+			result[i]=Math.sqrt(result[i]);
 		}
 		
-		long t7=System.currentTimeMillis();	
-		System.out.println("t7-t6: "+(t7-t6));
-		return resultNum+1;
-	}
-
-	public String getLoadPath(int num,int i) //num���ڼ�����, i�ڼ���ͼ��
-	{
-		if(num <= 0)
+		
+		for(int i=0;i<numberOfPeople;i++)
 		{
-			Log.error("i<=0");
-			return null;
+			cvReleaseMat(averageOfClass[i]);
 		}
-		else if (i <= 0)
+		cvReleaseMat(averageOfAll);
+		cvReleaseMat(ob);
+		cvReleaseMat(ob_t);
+		cvReleaseMat(ow);
+		cvReleaseMat(ow_t);
+		cvReleaseMat(ot);
+		cvReleaseMat(ot_t);
+		cvReleaseMat(V);
+		cvReleaseMat(D);
+		cvReleaseMat(U);
+		cvReleaseMat(temp1);
+		cvReleaseMat(temp2);
+		cvReleaseMat(temp1_t);
+		cvReleaseMat(Q);
+		cvReleaseMat(Q_t);
+		cvReleaseMat(Sb1);
+		cvReleaseMat(Sb2);
+		cvReleaseMat(Sw1);
+		cvReleaseMat(W);
+		for(int i=0;i<numberOfPeople;i++)
 		{
-			Log.error("num<=0");
-			return null;
+			cvReleaseMat(newClassOfPeopleTemp[i]);
 		}
-		else
+		for(int i=0;i<numberOfPeople;i++)
 		{
-			String loadPath=filePath;
-			if(num <= 9)
-			{
-				loadPath+="00";
-			}
-			else if(num <= 99)
-			{
-				loadPath+="0";
-			}
-			loadPath+=num;
-			if(i<=9)
-			{
-				loadPath+="0";
-			}
-			loadPath+=i;
-			loadPath+=".bmp";
-			
-			
-			return loadPath;
+			cvReleaseMat(newClassOfPeople[i]);
 		}
+		cvReleaseMat(unknownResult);
+		
+		return result;
 	}
 	
-	public void showImage(IplImage image)
+	public boolean saveImage(IplImage p,int num,int i)
 	{
-		cvNamedWindow("Example",CV_WINDOW_AUTOSIZE); //create a window to deploy the image
-	    cvShowImage("Example",image);//deploy the image
-	    cvWaitKey(0);//if press any button, destroy the window and image
-	    cvReleaseImage(image); 
-	}
-	
-	//������input�ľ�ֵ������output����inputΪx*y,��outΪ1*y
-	private CvMat meanByRows(CvMat input)
-	{
-		if(null == input)
+		if(p.height()!=xOfImage||p.width()!=yOfImage)
 		{
-			Log.error("Input CvMat is null");
-			return null;
+			Log.error("The size of input image is wrong, should be ["+xOfImage+","+yOfImage+"].");
+			return false;
 		}
+		if(i>numberOfEachPeople)
+		{
+			Log.error("Each people only has "+numberOfEachPeople+" images.");
+			return false;
+		}
+		if(num<=0||i<=0)
+		{
+			Log.error("Invalid input.");
+			return false;
+		}
+		String fileName=filePath;
+		if(num<=9)
+			fileName+="00"+num;
+		else if(num<=99)
+			fileName+="0"+num;
+		else if(num<=999)
+			fileName+=""+num;
 		else
 		{
-			int x=input.rows();
-			int y=input.cols();
-			CvMat output =cvCreateMat(1, y, CV_64FC1);
-			double temp;
-			for(int j=0;j<y;j++)
-			{
-				temp=0;
-				for(int i=0;i<x;i++)
-				{
-					temp+=input.get(i,j)/x;
-				}
-				output.put(0,j,temp);
-			}
-			return output;
+			Log.error("Input number is too big.");
+			return false;
 		}
-	}
-	
-	//�������࣬ÿһ������N��ͼ��
-	private CvMat creatClassLib(CvMat [] p,int start,int end)
-	{
-		if(null == p)
-		{
-			Log.error("The input CvMat is null!");
-			return null;
-		}
-		else
-		{
-			int x=p[start].rows();
-			int y=p[start].cols();
-			CvMat output=cvCreateMat(end-start+1,x*y, CV_64FC1);
-			for(int k=start;k<=end;k++)
-			{
-				CvMat temp=cvMatReshape(p[k]);						
-				for(int i=0;i<x*y;i++)
-				{
-					output.put(k-start,i,temp.get(0,i));
-				}
-			}
-			return output;
-		}
-	}
-	
-	// ��ĳ��x*y�ľ���ת��Ϊ1*(x*y)�ľ���
-	private CvMat cvMatReshape(CvMat input)
-	{
-		if(null == input)
-		{
-			Log.error("The input CvMat is null!");
-			return null;
-		}
-		else
-		{
-			int rows=input.rows();
-			int cols=input.cols();
-			CvMat output=cvCreateMat(1,rows*cols,CV_64FC1);
-			for(int i=0;i<rows;i++)
-			{
-				for(int j=0;j<cols;j++)
-				{
-					output.put(0, i*cols+j, input.get(i,j));
-				}
-			}
-			return output;
-		}
+		if(i<=9)
+			fileName+="0"+i;
+		else if(i<=99)
+			fileName+=""+i;
+		fileName+=".bmp";			
+		Image.writeImage(p, fileName);
+		return true;
 	}
 	
 }
